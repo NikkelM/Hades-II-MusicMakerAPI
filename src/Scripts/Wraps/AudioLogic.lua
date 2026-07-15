@@ -80,9 +80,15 @@ local function applyParams(soundId, songData, duration)
 	end
 end
 
+local purchaseInProgress = false
+
 modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 	local songName = game.GameState.MusicPlayerSongName
 	local newGroup = songGroupOf(songName)
+
+	local purchaseSwitch = purchaseInProgress
+	purchaseInProgress = false
+	local inMusicPlayerAction = game.ActiveScreens.MusicPlayer or purchaseSwitch
 
 	-- Only run our custom logic for modded tracks
 	if mod.RegisteredSongNames[songName] then
@@ -92,10 +98,9 @@ modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 
 		local previousId = game.AudioState.AmbientMusicId
 		local previousGroup = game.AudioState.MusicMakerAPI_CurrentGroup
-		-- Only carry the seek position (seamless switch) while the Music Maker screen is open
-		-- From other contexts (e.g. save load) we still apply stems but start fresh from the start
+		-- Carry the seek position only when the player bought a new song, otherwise (e.g. save load) start fresh
 		local sameGroupSwitch = previousId ~= nil and previousGroup ~= nil and previousGroup == newGroup and
-				game.ActiveScreens.MusicPlayer
+				inMusicPlayerAction
 
 		-- Same underlying FMOD event (shared TrackName): don't restart, just update the parameters in place
 		if previousId ~= nil and trackName == game.AudioState.AmbientTrackName then
@@ -165,10 +170,9 @@ modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 		end
 
 
-		-- Only carry the seek position (seamless switch) while the Music Maker screen is open
-		-- From other contexts (e.g. save load) we still apply stems but start fresh from the start
+		-- Carry the seek position only when the player bought a new song, otherwise (e.g. save load) start fresh
 		local sameGroupSwitch = previousId ~= nil and previousGroup ~= nil and previousGroup == newGroup and
-				game.ActiveScreens.MusicPlayer
+				inMusicPlayerAction
 		local carriedPosition = sameGroupSwitch and currentTrackedPosition() or nil
 
 		if carriedPosition ~= nil then
@@ -210,5 +214,11 @@ modutil.mod.Path.Wrap("SelectMusicPlayerItem", function(base, screen, button)
 		end
 	end
 
+	base(screen, button)
+end)
+
+-- To track if the seek position should be carried forward, as the new track starts while the screen is closed
+modutil.mod.Path.Wrap("DoMusicPlayerPurchase", function(base, screen, button)
+	purchaseInProgress = true
 	base(screen, button)
 end)
