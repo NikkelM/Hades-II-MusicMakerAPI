@@ -202,17 +202,27 @@ modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 	end
 end)
 
--- On a same-group version switch, put Mel's music-choice request lines on cooldown so the game naturally skips her selection quip over the fade.
--- Selecting any other song keeps her commentary
-modutil.mod.Path.Wrap("SelectMusicPlayerItem", function(base, screen, button)
-	local newSong = button ~= nil and button.Data ~= nil and button.Data.Name or nil
-	local previousSong = game.GameState.MusicPlayerSongName
+-- On a same-group version switch, put Mel's music-choice request lines on cooldown so the game naturally skips her quip over the fade
+-- Switching to any other song keeps her commentary
+local function suppressVersionSwitchQuip(newSong, previousSong)
 	if newSong ~= nil and previousSong ~= nil and newSong ~= previousSong then
 		local newGroup = songGroupOf(newSong)
 		if newGroup ~= nil and newGroup == songGroupOf(previousSong) then
 			game.TriggerCooldown("MelMusicPlayerRequestSpeech")
 		end
 	end
+end
+
+modutil.mod.Path.Wrap("SelectMusicPlayerItem", function(base, screen, button)
+	local newSong = button ~= nil and button.Data ~= nil and button.Data.Name or nil
+	suppressVersionSwitchQuip(newSong, game.GameState.MusicPlayerSongName)
+
+	base(screen, button)
+end)
+
+modutil.mod.Path.Wrap("HandleMusicPlayerPurchase", function(base, screen, button)
+	local newSong = button ~= nil and button.Data ~= nil and button.Data.Name or nil
+	suppressVersionSwitchQuip(newSong, game.GameState.MusicPlayerSongName)
 
 	base(screen, button)
 end)
