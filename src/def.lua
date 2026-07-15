@@ -8,7 +8,7 @@ local public = {}
 ---@field Name table Localized display name shown in the Music Maker list, e.g. { en = "My Song", de = "Mein Lied" }. The "en" key is required; missing languages fall back to English. Note that you need to double-escape square brackets: \\[Lyrics\\].
 ---@field Description table Localized description shown when the song is selected in the Music Maker, e.g. { en = "...", de = "..." }. The "en" key is required; missing languages fall back to English.
 ---@field InheritFrom table|nil Which existing song to inherit from, if applicable. Defaults to { "DefaultSongItem" }.
----@field Cost table|nil The resource cost to unlock this song. For display purposes, limit to at most five different resources. If nil, the inherited default is used.
+---@field Cost table|nil The resource cost to unlock this song. For display purposes, limit to at most five different resources. If nil, the inherited default of 100 CosmeticsPoints/Kudos is used.
 ---@field GameStateRequirements table|nil The requirements that must be met for this song to be purchasable. Supports all base-game requirement logic. Defaults to no requirements/always available.
 ---@field Rocking boolean|nil If true, the Music Maker will "rock out" to your song, instead of simply swaying.
 ---@field VersionOf string|nil The song this is a different version of (a base-game song like "Song_ArtemisSong", or another registered song). All songs that are versions of the same anchor form one group automatically, even across mods, and switching between them preserves the playback position (crossfade/live parameter morph). Supply the length of the anchor song via `RegisterVersionGroup`.

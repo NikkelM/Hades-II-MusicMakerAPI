@@ -52,33 +52,44 @@ Otherwise, you can always refer to the `def.lua` file in the Music Maker API sou
 
 ```lua
 MusicMakerAPI.RegisterSong({
-	-- REQUIRED
+	-- REQUIRED FIELDS
 	Id = _PLUGIN.guid .. "ArtemisSong_Duet",
-	TrackName = "{00000000-0000-0000-0000-000000000000}", -- The event GUID for this track, from the exported GUIDS.txt in FMOD
-	InsertAfter = "Song_ArtemisSong",
+	-- The FMOD event to play: a GUID string of an event in a bank you register via `RegisterSoundBank`, or a base-game path like "/Music/IrisMusicScylla1_MC"
+	TrackName = "{00000000-0000-0000-0000-000000000000}",
 	-- At least "en" must be provided for Name and Description
 	Name = {
-		en = "Moonlight Guide Us \\[Duet\\]", -- Square brackets need to be double-escaped to display correctly!
+		en = "Moonlight Guide Us \\[Duet\\]", -- Double-escape square brackets so they display correctly
 		de = "Mondlicht leite uns \\[Duet\\]",
 	},
 	Description = {
 		en = "Theme the Silver Sisters use to strengthen their connection and steady their resolve.",
 		-- ...
 	},
-	-- OPTIONAL
-	-- Stems to activate; every other stem used by any version of this FMOD event is deactivated
-	-- If your event does not rely on any stems being active/you did not add any automations using parameters, leave this empty
-	Stems = { "Guitar", "Bass", "Vocals" },
-	Cost = { 
-		CosmeticsPoints = 250
+
+	-- OPTIONAL FIELDS (with their defaults)
+	-- Which other song in the list to insert your new one after, or nil to add to the end
+	InsertAfter = nil,
+	-- The song this is a version of, enabling seamless switching between them. See "Grouping songs for seamless switching" below
+	VersionOf = nil,
+	-- Which stems (FMOD cue names) to activate; every other stem in the event is deactivated. Leave nil for a pre-mixed track
+	Stems = nil,
+	-- Extra non-stem cue values to set, e.g. { LowPass = 0 }; usually only needed for songs that reuse base-game events
+	AmbientParams = nil,
+	-- Value for the "Section" FMOD parameter, if your event defines multiple sections
+	MusicSection = nil,
+	-- Seconds to seek into the track when it starts
+	TrackOffset = 0,
+	-- Try to limit to at most five different resources for optimal display in the UI
+	Cost = {
+		CosmeticsPoints = 100,
 	},
-	GameStateRequirements = {
-		{ 
-			PathTrue = { "GameState", "WorldUpgradesAdded", "Song_ArtemisSong" }
-		},
-	},
-	UnlockImmediately = config.unlockEverything,
-	VersionOf = "Song_ArtemisSong", -- If you use `RegisterVersionGroup()`, make this song join the given group, by its `AnchorSong`
+	-- Must be met before the song becomes available for purchase
+	GameStateRequirements = {},
+	InheritFrom = { "DefaultSongItem" },
+	-- If true, the Music Maker will "rock out" to your song instead of simply swaying
+	Rocking = nil,
+	-- Unlock the song immediately instead of requiring purchase, typically wired to your own mod's config
+	UnlockImmediately = false,
 })
 ```
 
