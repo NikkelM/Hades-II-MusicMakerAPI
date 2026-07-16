@@ -25,7 +25,7 @@ public.RegisterSong = function(songData) end
 
 ---@class MusicMakerVersionGroupData
 ---@field AnchorSong string The song that every version in this group is a version of (usually a base-game song like "Song_ArtemisSong"). Matches the VersionOf of the group's songs.
----@field LoopLength number|nil The length in seconds of one loop of the shared arrangement, used to wrap a carried playback position. Measure it from your FMOD event.
+---@field LoopLength number|nil The length in seconds of one loop of the shared arrangement, used to wrap a carried playback position. Measure it from your FMOD event, and if unsure round down rather than up, since a slightly short value keeps the carried seek inside real audio while too long can seek past the loop into silence.
 
 ---Registers the loop length for a version group, identified by its anchor song. Songs join a group automatically by declaring `VersionOf`.
 ---This call only supplies the anchor's loop length so a carried playback position can be wrapped.

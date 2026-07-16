@@ -106,9 +106,13 @@ Register the anchor's loop length once so the carried position wraps correctly (
 ```lua
 MusicMakerAPI.RegisterVersionGroup({
 	AnchorSong = "Song_ArtemisSong",
-	LoopLength = 177.34,
+	-- One loop of the shared arrangement, in seconds. If you are unsure of the exact amount, round down rather than up
+	LoopLength = 177,
 })
 ```
+
+If you are unsure of the exact length of the loop, always round down rather than up.
+A slightly short loop length keeps the carried position inside real audio, while a value longer than the true loop can seek past the end into silence.
 
 To group songs you add yourself, pick one of them as the anchor (leave its `VersionOf` unset) and point every other version at the anchor's exact `Id`:
 
@@ -121,7 +125,7 @@ MusicMakerAPI.RegisterSong({ Id = anchorId, --[[ TrackName, Name, ... ]] })
 MusicMakerAPI.RegisterSong({ Id = _PLUGIN.guid .. "MySong_Vocals", VersionOf = anchorId, --[[ ... ]] })
 MusicMakerAPI.RegisterSong({ Id = _PLUGIN.guid .. "MySong_Duet", VersionOf = anchorId, --[[ ... ]] })
 
-MusicMakerAPI.RegisterVersionGroup({ AnchorSong = anchorId, LoopLength = 177.34 })
+MusicMakerAPI.RegisterVersionGroup({ AnchorSong = anchorId, LoopLength = 177 })
 ```
 
 To anchor on another mod's song instead, set `VersionOf` to that song's exact registered `Id` and declare that mod as a dependency so the song is present.
