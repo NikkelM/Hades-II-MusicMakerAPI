@@ -102,13 +102,17 @@ modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 		local sameGroupSwitch = previousId ~= nil and previousGroup ~= nil and previousGroup == newGroup and
 				inMusicPlayerAction
 
-		-- Same underlying FMOD event (shared TrackName): don't restart, just update the parameters in place
+		-- Same underlying FMOD event (shared TrackName): stems and ambient params can morph in place, but a Section change only takes effect when the track is re-triggered, so only morph when the Section is unchanged
 		if previousId ~= nil and trackName == game.AudioState.AmbientTrackName then
-			game.AudioState.MusicMakerAPI_CurrentSongName = songName
-			game.AudioState.MusicMakerAPI_CurrentGroup = newGroup
-			game.UpdateAmbientMusicParameters({ Params = {} })
-			applyParams(previousId, songData, 1.0)
-			return
+			local currentSongData = game.WorldUpgradeData[game.AudioState.MusicMakerAPI_CurrentSongName]
+			local currentSection = currentSongData ~= nil and currentSongData.MusicMakerAPI_MusicSection or nil
+			if songData.MusicMakerAPI_MusicSection == currentSection then
+				game.AudioState.MusicMakerAPI_CurrentSongName = songName
+				game.AudioState.MusicMakerAPI_CurrentGroup = newGroup
+				game.UpdateAmbientMusicParameters({ Params = {} })
+				applyParams(previousId, songData, 1.0)
+				return
+			end
 		end
 
 		local carriedPosition = sameGroupSwitch and currentTrackedPosition() or nil
