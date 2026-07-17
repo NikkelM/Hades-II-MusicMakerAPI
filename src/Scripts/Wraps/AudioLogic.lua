@@ -3,6 +3,9 @@
 -- Crossfade length (seconds) used when switching between two versions of the same song
 local crossFadeDuration = 0.3
 
+-- Switch length (seconds) for the continuous backing stems: short so the shared backing stays seamless across a position-aligned switch instead of fading out and back in
+local backingSwitchDuration = 0.05
+
 -- The version group a song belongs to, identified by its anchor song. Returns nil if not grouped
 local function songGroupOf(songName)
 	if songName == nil then
@@ -80,6 +83,63 @@ local function applyParams(soundId, songData, duration)
 	end
 end
 
+-- The set of continuous (non-crossfaded) stem names for a group
+local function continuousStemsFor(group)
+	if group ~= nil and mod.AnchorContinuousStems[group] ~= nil then
+		return mod.AnchorContinuousStems[group]
+	end
+
+	return { Drums = true, Bass = true, Guitar = true }
+end
+
+-- Applies a version's stems while crossfading: continuous backing stems switch instantly (the incoming instance is faded up quickly as a whole), every other stem fades in from silent over crossFadeDuration, so only the differing layers (e.g. vocals) crossfade between versions
+local function applyParamsCrossfade(soundId, songData, continuousStems)
+	local stems = songData.MusicMakerAPI_Stems
+	if stems ~= nil then
+		local activeSet = {}
+		for _, stem in ipairs(stems) do
+			activeSet[stem] = true
+		end
+
+		local known = mod.EventStems[songData.TrackName]
+		if known ~= nil then
+			for stem, _ in pairs(known) do
+				local target = activeSet[stem] and 1 or 0
+				if continuousStems[stem] then
+					SetSoundCueValue({ Id = soundId, Names = { stem }, Value = target })
+				else
+					SetSoundCueValue({ Id = soundId, Names = { stem }, Value = 0 })
+					SetSoundCueValue({ Id = soundId, Names = { stem }, Value = target, Duration = crossFadeDuration })
+				end
+			end
+		end
+	end
+
+	local ambientParams = songData.MusicMakerAPI_AmbientParams
+	if ambientParams ~= nil then
+		for param, value in pairs(ambientParams) do
+			SetSoundCueValue({ Id = soundId, Names = { param }, Value = value })
+		end
+	end
+
+	local section = songData.MusicMakerAPI_MusicSection
+	if section ~= nil then
+		SetSoundCueValue({ Id = soundId, Names = { "Section" }, Value = section })
+	end
+end
+
+-- Fades out the outgoing version: continuous backing stems are cut quickly so they do not double with the incoming backing, while the remaining stems (e.g. vocals) fade out as the instance is stopped over crossFadeDuration
+local function crossfadeOutPrevious(previousId, continuousStems)
+	if previousId == nil then
+		return
+	end
+
+	for stem, _ in pairs(continuousStems) do
+		SetSoundCueValue({ Id = previousId, Names = { stem }, Value = 0, Duration = backingSwitchDuration })
+	end
+	StopSound({ Id = previousId, Duration = crossFadeDuration })
+end
+
 local purchaseInProgress = false
 
 modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
@@ -123,10 +183,19 @@ modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 			SetVolume({ Id = newId, Value = 0, Duration = 0 })
 			SetSoundPosition({ Id = newId, Position = carriedPosition + (offset or 0) })
 			SetSoundSource({ Id = newId, DestinationId = game.CurrentHubRoom.AmbientMusicSourceId })
-			applyParams(newId, songData, nil)
-			SetVolume({ Id = newId, Value = game.CurrentHubRoom.AmbientMusicVolume, Duration = crossFadeDuration })
-			if previousId ~= nil then
-				StopSound({ Id = previousId, Duration = crossFadeDuration })
+			if songData.MusicMakerAPI_Stems ~= nil then
+				-- Keep the shared backing continuous and only crossfade the differing stems (e.g. vocals) between versions
+				local continuous = continuousStemsFor(newGroup)
+				applyParamsCrossfade(newId, songData, continuous)
+				SetVolume({ Id = newId, Value = game.CurrentHubRoom.AmbientMusicVolume, Duration = backingSwitchDuration })
+				crossfadeOutPrevious(previousId, continuous)
+			else
+				-- A pre-mixed version with no stems: crossfade the whole instance
+				applyParams(newId, songData, nil)
+				SetVolume({ Id = newId, Value = game.CurrentHubRoom.AmbientMusicVolume, Duration = crossFadeDuration })
+				if previousId ~= nil then
+					StopSound({ Id = previousId, Duration = crossFadeDuration })
+				end
 			end
 			game.AudioState.AmbientMusicId = newId
 			game.AudioState.AmbientTrackName = trackName
@@ -181,6 +250,7 @@ modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 
 		if carriedPosition ~= nil then
 			-- Crossfade to the vanilla version at the carried position, mirroring the modded path
+			local continuous = continuousStemsFor(newGroup)
 			local newId = PlaySound({ Name = trackName, Id = game.CurrentHubRoom.AmbientMusicSourceId })
 			SetVolume({ Id = newId, Value = 0, Duration = 0 })
 			SetSoundPosition({ Id = newId, Position = carriedPosition })
@@ -191,8 +261,9 @@ modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 					SetSoundCueValue({ Id = newId, Name = param, Value = value })
 				end
 			end
-			SetVolume({ Id = newId, Value = game.CurrentHubRoom.AmbientMusicVolume, Duration = crossFadeDuration })
-			StopSound({ Id = previousId, Duration = crossFadeDuration })
+			-- Bring the vanilla backing up quickly so it stays continuous, and let the outgoing version's non-backing stems (e.g. vocals) fade out
+			SetVolume({ Id = newId, Value = game.CurrentHubRoom.AmbientMusicVolume, Duration = backingSwitchDuration })
+			crossfadeOutPrevious(previousId, continuous)
 			game.AudioState.AmbientMusicId = newId
 			game.AudioState.AmbientTrackName = trackName
 		else

@@ -114,6 +114,17 @@ MusicMakerAPI.RegisterVersionGroup({
 If you are unsure of the exact length of the loop, always round down rather than up.
 A slightly short loop length keeps the carried position inside real audio, while a value longer than the true loop can seek past the end into silence.
 
+When switching between versions, shared backing stems (`Drums`, `Bass`, `Guitar` by default) are kept continuous rather than faded out and back in, and only differing stems (such as vocals) crossfade.
+Override the set with `ContinuousStems` if your backing uses different stem names, or pass `ContinuousStems = {}` to crossfade every stem:
+
+```lua
+MusicMakerAPI.RegisterVersionGroup({
+	AnchorSong = "Song_ArtemisSong",
+	LoopLength = 177,
+	ContinuousStems = { "Drums", "Bass", "Guitar", "Synth" },
+})
+```
+
 To group songs you add yourself, pick one of them as the anchor (leave its `VersionOf` unset) and point every other version at the anchor's exact `Id`:
 
 ```lua

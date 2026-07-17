@@ -223,6 +223,32 @@ public.RegisterVersionGroup = function(groupData)
 		mod.AnchorLoopLength[groupData.AnchorSong] = groupData.LoopLength
 	end
 
+	-- #region ContinuousStems
+	-- Stems kept continuous (switched quickly, not crossfaded) when switching between this group's versions.
+	if groupData.ContinuousStems ~= nil and type(groupData.ContinuousStems) == "table" then
+		local stemsAreStrings = true
+		for _, stem in ipairs(groupData.ContinuousStems) do
+			if type(stem) ~= "string" then
+				stemsAreStrings = false
+				break
+			end
+		end
+		if stemsAreStrings then
+			local continuousSet = {}
+			for _, stem in ipairs(groupData.ContinuousStems) do
+				continuousSet[stem] = true
+			end
+			mod.AnchorContinuousStems[groupData.AnchorSong] = continuousSet
+		else
+			mod.DebugPrint(
+				"[MusicMakerAPI] Warning: ContinuousStems must be a list of strings, ignoring ContinuousStems for group: " ..
+				tostring(groupData.AnchorSong), 2)
+		end
+	elseif groupData.ContinuousStems ~= nil then
+		mod.WarnIncorrectType("ContinuousStems", "table", type(groupData.ContinuousStems), groupData.AnchorSong)
+	end
+	-- #endregion
+
 	mod.DebugPrint("[MusicMakerAPI] Registered version group anchored on: " .. groupData.AnchorSong, 3)
 	return true
 end

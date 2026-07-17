@@ -30,6 +30,8 @@ mod.SongAnchor = {}
 mod.IsAnchor = {}
 -- Maps a songName to its loop length in seconds
 mod.AnchorLoopLength = {}
+-- Maps a group anchor songName to a set of stem names kept continuous (switched quickly, not crossfaded) when switching between its versions
+mod.AnchorContinuousStems = {}
 -- Array of song text entries, for the per-language HelpText sjson hooks
 mod.AddedSongSjsonTextData = {}
 -- Array of { Path = absolutePath } sound banks to load when entering the Crossroads
