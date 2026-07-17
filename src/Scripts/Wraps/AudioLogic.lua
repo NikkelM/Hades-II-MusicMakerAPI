@@ -121,7 +121,7 @@ modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 			-- Same song, different event: crossfade at the carried position so the switch feels immediate
 			local newId = PlaySound({ Name = songData.TrackName, Id = game.CurrentHubRoom.AmbientMusicSourceId })
 			SetVolume({ Id = newId, Value = 0, Duration = 0 })
-			SetSoundPosition({ Id = newId, Position = carriedPosition })
+			SetSoundPosition({ Id = newId, Position = carriedPosition + (offset or 0) })
 			SetSoundSource({ Id = newId, DestinationId = game.CurrentHubRoom.AmbientMusicSourceId })
 			applyParams(newId, songData, nil)
 			SetVolume({ Id = newId, Value = game.CurrentHubRoom.AmbientMusicVolume, Duration = crossFadeDuration })
@@ -147,7 +147,7 @@ modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 			if startOffset ~= 0 then
 				SetSoundPosition({ Id = game.AudioState.AmbientMusicId, Position = startOffset })
 			end
-			game.AudioState.MusicMakerAPI_PlaybackPositionZeroTime = game._worldTimeUnmodified - startOffset
+			game.AudioState.MusicMakerAPI_PlaybackPositionZeroTime = game._worldTimeUnmodified
 			game.UpdateAmbientMusicParameters({ Params = {} })
 			applyParams(game.AudioState.AmbientMusicId, songData, 1.0)
 		end
