@@ -203,11 +203,13 @@ modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 		game.AudioState.MusicMakerAPI_CurrentGroup = newGroup
 	else
 		base(trackName, args)
+		game.AudioState.MusicMakerAPI_CurrentGroup = nil
+		game.AudioState.MusicMakerAPI_CurrentSongName = nil
+		game.AudioState.MusicMakerAPI_PlaybackPositionZeroTime = nil
 	end
 end)
 
 -- On a same-group version switch, put Mel's music-choice request lines on cooldown so the game naturally skips her quip over the fade
--- Switching to any other song keeps her commentary
 local function suppressVersionSwitchQuip(newSong, previousSong)
 	if newSong ~= nil and previousSong ~= nil and newSong ~= previousSong then
 		local newGroup = songGroupOf(newSong)
