@@ -40,4 +40,11 @@ public.RegisterVersionGroup = function(groupData) end
 ---@return boolean successfullyRegistered True if the sound bank was registered, false otherwise.
 public.RegisterSoundBank = function(bankPath) end
 
+---Grants a song to the player as unlocked, recording it in the API's own unlocked-song list instead of `GameState.UnlockedMusicPlayerSongs`.
+---Use this (rather than inserting into `GameState.UnlockedMusicPlayerSongs` yourself) whenever your mod unlocks a song outside of a normal purchase, such as auto-unlocked songs after an incantation is completed.
+---Songs granted this way survive your mod being uninstalled and can never corrupt the vanilla shuffle, while still being injected back into the shuffle pool whenever the mod is installed. Also marks the song owned so it shows as purchased in the Music Maker.
+---@param songId string The Id of a registered song to unlock.
+---@return boolean successfullyUnlocked True if the song was unlocked, false if the songId is unknown.
+public.UnlockSong = function(songId) end
+
 return public

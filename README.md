@@ -93,6 +93,19 @@ MusicMakerAPI.RegisterSong({
 })
 ```
 
+### Unlocking songs
+
+Usually, registered songs are unlocked either by purchasing them at the Music Maker, or through the `UnlockImmediately` flag during registration.
+If your mod needs to unlock a song at some other point - for example after the player completes an incantation - call `MusicMakerAPI.UnlockSong` with the song's `Id`:
+
+```lua
+MusicMakerAPI.UnlockSong(_PLUGIN.guid .. "MySong")
+```
+
+`UnlockSong` returns `true` if the song was unlocked, or `false` if the `Id` is not a registered song (register it via `RegisterSong` first).
+
+Don't manually unlock your modded songs - the API keeps a separate list for owned modded songs to ensure the game cannot crash if your mod is ever uninstalled by the user.
+
 ### Grouping songs for seamless switching
 
 When several songs are versions of the same underlying track, you can make the Music Maker switch between them seamlessly: instead of restarting from the beginning, it carries the playback position over and crossfades, so it sounds like the active stems (or who is singing) are simply toggled.

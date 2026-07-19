@@ -274,3 +274,25 @@ public.RegisterSoundBank = function(bankPath)
 
 	return true
 end
+
+---Grants a song to the player as unlocked, recording it in the API's own unlocked-song list instead of `GameState.UnlockedMusicPlayerSongs`.
+---Use this (rather than inserting into `GameState.UnlockedMusicPlayerSongs` yourself) whenever your mod unlocks a song outside of a normal purchase, such as auto-unlocked songs after an incantation is completed.
+---Songs granted this way survive your mod being uninstalled and can never corrupt the vanilla shuffle, while still being injected back into the shuffle pool whenever the mod is installed. Also marks the song owned so it shows as purchased in the Music Maker.
+---@param songId string The Id of a registered song to unlock.
+---@return boolean successfullyUnlocked True if the song was unlocked, false if the songId is unknown.
+public.UnlockSong = function(songId)
+	if type(songId) ~= "string" then
+		mod.DebugPrint("[MusicMakerAPI] Error: UnlockSong expects a string songId, got " .. type(songId), 1)
+		return false
+	end
+	-- Only songs registered through this API may be unlocked, so a non-song world upgrade can never end up injected into the shuffle pool
+	if not mod.RegisteredSongNames[songId] then
+		mod.DebugPrint("[MusicMakerAPI] Warning: UnlockSong called for unregistered song '" .. songId ..
+			"', ignoring. Register the song via RegisterSong before unlocking it.", 2)
+		return false
+	end
+
+	game.AddWorldUpgrade(songId, { SkipQuestStatusCheck = true })
+	mod.AddUnlockedModdedSong(songId)
+	return true
+end

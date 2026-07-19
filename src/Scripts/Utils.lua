@@ -110,3 +110,24 @@ function mod.WarnIncorrectType(fieldName, expectedType, actualType, songId)
 		actualType .. "' (expected '" .. expectedType ..
 		"') in song data: " .. tostring(songId), 2)
 end
+
+-- #region Unlocked modded song list
+function mod.AddUnlockedModdedSong(songId)
+	game.GameState.ModsNikkelMMusicMakerAPI_UnlockedSongs = game.GameState.ModsNikkelMMusicMakerAPI_UnlockedSongs or {}
+	if not game.Contains(game.GameState.ModsNikkelMMusicMakerAPI_UnlockedSongs, songId) then
+		table.insert(game.GameState.ModsNikkelMMusicMakerAPI_UnlockedSongs, songId)
+	end
+end
+
+function mod.GetAvailableModdedSongs()
+	local available = {}
+	for _, songId in ipairs(game.GameState.ModsNikkelMMusicMakerAPI_UnlockedSongs or {}) do
+		if mod.RegisteredSongNames[songId] and game.WorldUpgradeData[songId] ~= nil then
+			table.insert(available, songId)
+		end
+	end
+
+	return available
+end
+
+-- #endregion

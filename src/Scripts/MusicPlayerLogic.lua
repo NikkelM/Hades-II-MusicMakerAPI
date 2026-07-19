@@ -45,10 +45,7 @@ end
 -- Unlock the songs whose owning mod asked for them to be unlocked immediately (usually via that mod's own config)
 local function unlockFlaggedSongs()
 	for songId, _ in pairs(mod.SongsToUnlockImmediately) do
-		game.AddWorldUpgrade(songId)
-		if not game.Contains(game.GameState.UnlockedMusicPlayerSongs, songId) then
-			table.insert(game.GameState.UnlockedMusicPlayerSongs, songId)
-		end
+		public.UnlockSong(songId)
 	end
 end
 
@@ -62,16 +59,34 @@ if next(mod.SongsToUnlockImmediately) ~= nil then
 	end
 end
 
--- Retroactively repair songs that were unlocked via AddWorldUpgrade but never added to UnlockedMusicPlayerSongs (e.g. from an older version of a consumer mod before this was fixed).
-modutil.mod.Path.Wrap("DoPatches", function(base)
-	if game.GameState ~= nil and game.GameState.WorldUpgradesAdded ~= nil then
-		for songId, _ in pairs(mod.RegisteredSongNames) do
-			if game.GameState.WorldUpgradesAdded[songId] == true
-					and not game.Contains(game.GameState.UnlockedMusicPlayerSongs, songId) then
-				table.insert(game.GameState.UnlockedMusicPlayerSongs, songId)
-			end
-		end
+-- Include modded songs in the pool of unlocked songs
+modutil.mod.Path.Wrap("MusicPlayerGetShuffledPlaylist", function(base, args)
+	local originalUnlocked = game.ShallowCopyTable(game.GameState.UnlockedMusicPlayerSongs)
+	for _, songId in ipairs(mod.GetAvailableModdedSongs()) do
+		table.insert(game.GameState.UnlockedMusicPlayerSongs, songId)
 	end
 
-	base()
+	local playlist = base(args)
+
+	game.GameState.UnlockedMusicPlayerSongs = originalUnlocked
+
+	return playlist
+end)
+
+-- Don't insert modded songs into the base unlocked pool, instead move to our own
+modutil.mod.Path.Wrap("HandleMusicPlayerPurchase", function(base, screen, button)
+	base(screen, button)
+
+	local songId = button ~= nil and button.Data ~= nil and button.Data.Name or nil
+	if songId ~= nil and mod.RegisteredSongNames[songId] then
+		if game.Contains(game.GameState.UnlockedMusicPlayerSongs, songId) then
+			for i = #game.GameState.UnlockedMusicPlayerSongs, 1, -1 do
+				if game.GameState.UnlockedMusicPlayerSongs[i] == songId then
+					table.remove(game.GameState.UnlockedMusicPlayerSongs, i)
+					break
+				end
+			end
+			mod.AddUnlockedModdedSong(songId)
+		end
+	end
 end)

@@ -158,6 +158,7 @@ modutil.mod.Path.Wrap("MusicianMusic", function(base, trackName, args)
 
 		local previousId = game.AudioState.AmbientMusicId
 		local previousGroup = game.AudioState.MusicMakerAPI_CurrentGroup
+
 		-- Carry the seek position only when the player bought a new song, otherwise (e.g. save load) start fresh
 		local sameGroupSwitch = previousId ~= nil and previousGroup ~= nil and previousGroup == newGroup and
 				inMusicPlayerAction
@@ -308,4 +309,26 @@ end)
 modutil.mod.Path.Wrap("DoMusicPlayerPurchase", function(base, screen, button)
 	purchaseInProgress = true
 	base(screen, button)
+end)
+
+modutil.mod.Path.Wrap("RestoreMusicianMusic", function(base, source, args)
+	-- Remove any modded songs that no longer exist from the playlist
+	if game.GameState.MusicPlayerPlaylist ~= nil then
+		for i = #game.GameState.MusicPlayerPlaylist, 1, -1 do
+			if game.WorldUpgradeData[game.GameState.MusicPlayerPlaylist[i]] == nil then
+				table.remove(game.GameState.MusicPlayerPlaylist, i)
+			end
+		end
+	end
+
+	-- If the selected song is gone, continue from a still-valid playlist entry, otherwise clear it so the game's own guard safely skips playback
+	if game.GameState.MusicPlayerSongName ~= nil and game.WorldUpgradeData[game.GameState.MusicPlayerSongName] == nil then
+		if game.GameState.MusicPlayerPlaylist ~= nil and game.GameState.MusicPlayerPlaylist[1] ~= nil then
+			game.GameState.MusicPlayerSongName = game.GameState.MusicPlayerPlaylist[1]
+		else
+			game.GameState.MusicPlayerSongName = nil
+		end
+	end
+
+	return base(source, args)
 end)

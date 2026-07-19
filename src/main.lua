@@ -58,6 +58,7 @@ local function on_ready_late()
 	import "Scripts/MusicPlayerLogic.lua"
 	import "Scripts/Wraps/AudioLogic.lua"
 	import "Scripts/Wraps/LoadSoundBanks.lua"
+	import "Scripts/Wraps/PatchLogic.lua"
 	import "Scripts/SjsonHooks.lua"
 end
 
